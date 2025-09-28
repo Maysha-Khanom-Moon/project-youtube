@@ -56,13 +56,20 @@ userSchema.pre("save", async function (next) {
 });
 
 
-// Instance method to generate JWT token
+// Instance method of schema --> available on every user document
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 }
 
 
 // jwt: it's a bearer token. whom have the token, can access the protected routes
+/**
+ * --- jwt methods ---
+ * .sign: generates a new jwt
+ * .verify: verifies if token is valid and not expired
+ * .decode: decode the token without verifying
+ * 
+ */
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign (
         {
@@ -70,11 +77,11 @@ userSchema.methods.generateAccessToken = function () {
             email: this.email,
             username: this.username,
             fullname: this.fullname
-        },
-        process.env.ACCESS_TOKEN_SECRET,
+        }, // payload: data stored in jwt
+        process.env.ACCESS_TOKEN_SECRET, // secret
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-        }
+        } // options
     )
 }
 
