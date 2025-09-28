@@ -1,4 +1,6 @@
 import mongoose, { Schema } from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const userSchema = new Schema ({
     username: {
@@ -41,5 +43,51 @@ const userSchema = new Schema ({
         type: String,
     }
 }, { timestamps: true });
+
+
+// mongoose middleware pre hook to perform actions before saving a user
+// Hash password before saving the user
+// don't use arrow function, because here we need to access 'this'
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+
+    this.password = await bcrypt.hash(this.password, 10); // 10 is the salt rounds
+    next();
+});
+
+
+// Instance method to generate JWT token
+userSchema.methods.isPasswordCorrect = async function (password) {
+    return await bcrypt.compare(password, this.password);
+}
+
+
+// jwt: it's a bearer token. whom have the token, can access the protected routes
+userSchema.methods.generateAccessToken = function () {
+    return jwt.sign (
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullname: this.fullname
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+        }
+    )
+}
+
+userSchema.methods.generateRefreshToken = function () {
+    return jwt.sign (
+        {
+            _id: this._id
+        },
+        process.env.REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
 
 export const User = mongoose.model("User", userSchema);
