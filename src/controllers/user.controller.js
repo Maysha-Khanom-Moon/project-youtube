@@ -36,9 +36,17 @@ const registerUser = asyncHandler( async (req, res) => {
 
     // 4.
     const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalPath = req.files?.coverImage[0]?.path
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required");
+    }
+
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path
+    // prevent undefined, we have to go for classic way
+    let coverImageLocalPath
+    if (req.files?.coverImage && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files?.coverImage[0]?.path
+    } else {
+        coverImageLocalPath = ""
     }
     
     // 5.
@@ -55,7 +63,7 @@ const registerUser = asyncHandler( async (req, res) => {
         fullname,
         password,
         avatar: avatar.url,
-        coverImage: coverImage?.url || ""
+        coverImage: coverImage?.url || "" // sometimes optional chaining in undefined will throw error
     })
 
     // 7.
