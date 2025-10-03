@@ -52,7 +52,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     // 4.
-    const avatarLocalPath = req.files?.avatar[0]?.path
+    const avatarLocalPath = req.files?.avatar[0]?.path //multiple files => upload.fields([{ ... }, { ... }, ...])
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar is required");
     }
@@ -296,7 +296,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 
 // for file upload should use different function
 const updateUserAvatar = asyncHandler(async (req, res) => {
-    const avatarLocalPath = req.file?.path
+    const avatarLocalPath = req.file?.path // upload single file => upload.single("avatar")
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is missing")
     }
