@@ -99,7 +99,7 @@ const registerUser = asyncHandler( async (req, res) => {
 })
 
 
-const loginUser = asyncHandler (async (req, res) => {
+const loginUser = asyncHandler ( async (req, res) => {
     // req body --> data
     // username or email
     // find the user
@@ -156,10 +156,43 @@ const loginUser = asyncHandler (async (req, res) => {
             "User logged in successfully"
         )
     )
+})
 
+
+const logoutUser = asyncHandler( async (req, res) => {
+    // clear refreshToken
+    // clear cookies
+    // return response
+
+    // 1.
+    User.findByIdAndUpdate(
+        req.user._id, 
+        {
+            $set: {
+                refreshToken: undefined
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    // 2, 3
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+    return res
+    .status(200)
+    .clearCookie("accessToken")
+    .clearCookie("refreshToken")
+    .json(
+        new ApiResponse(200, null, "User logged out successfully")
+    )
 })
 
 export {
     registerUser,
-    loginUser
+    loginUser,
+    logoutUser
 }
