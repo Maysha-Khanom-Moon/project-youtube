@@ -4,6 +4,7 @@ import { User } from './../models/user.model.js';
 import { deleteFromCloudinary, uploadOnCloudinary } from './../utils/cloudinary.js';
 import ApiResponse from './../utils/ApiResponse.js';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
@@ -372,7 +373,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         {
             $lookup: {
-                from: "subscriptions",
+                from: "subscriptions", // have to add the actual name as it stored in db
                 localField: "_id",
                 foreignField: "channel",
                 as: "subscribers"
@@ -428,6 +429,56 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     )
 })
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+        /**
+         * req.user._id is often a string (e.g., coming from JWT/session).
+         *  In most Mongoose model queries (findById, findOne, etc.), Mongoose will auto-cast that string into an ObjectId for you.
+         * 
+         * But inside an aggregation pipeline ($match, $lookup, etc.), Mongoose does not auto-cast
+         * so you have to manually wrap it with new mongoose.Types.ObjectId().
+         */
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            },
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullname: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                // $first: "$owner"
+                                $arrayElemAt: ["$owner", 0]
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+})
+
 export {
     registerUser,
     loginUser,
@@ -437,5 +488,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 }
