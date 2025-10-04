@@ -16,6 +16,7 @@ app.use(cookieParser());
 
 
 // routes
+// the name on import doesn't matter for a default export
 import userRouter from "./routes/user.routes.js";
 
 // routes declaration
